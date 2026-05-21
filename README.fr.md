@@ -1,5 +1,10 @@
 # Merge-CSVFile
 
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)](https://github.com/Letalys/RomStationRebase/releases/latest)
+
+**[English](README.md) · [Français](README.fr.md)**
+
 Script PowerShell de fusion de deux fichiers CSV, offrant deux modes de fusion
 (empilement ou jointure sur clé), une déduplication paramétrable, l'export des
 enregistrements sans correspondance et une journalisation optionnelle.
