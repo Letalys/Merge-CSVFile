@@ -178,7 +178,7 @@
 
 .NOTES
 	Version       : 2.5
-	Auteur        : Christophe GOEMAERE (CCFR)
+	Auteur        : Christophe GOEMAERE
 	Date creation : 2026-05-21
 	Modifications :
 		v1.0 - 2026-05-21 - Version initiale (modes Union / Join, JoinType Left / Inner).
@@ -197,7 +197,7 @@
 		                    -ConflictEmptyValue (Strict / Fallback) pour fusionner les colonnes
 		                    en collision en une seule colonne priorisee.
 		v2.5 - 2026-05-21 - Renommage des strategies de deduplication FIFO / FILO en
-		                    KeepFirst / KeepLast (vocabulaire plus explicite).
+		                    KeepFirst / KeepLast.
 #>
 
 [CmdletBinding(DefaultParameterSetName='Union')]
