@@ -1,7 +1,7 @@
 # Merge-CSVFile
 
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)]
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)](https://github.com/Letalys/Merge-CSVFile)
 
 **[English](README.md) · [Français](README.fr.md)**
 
