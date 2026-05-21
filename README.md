@@ -1,5 +1,10 @@
 # Merge-CSVFile
 
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)]
+
+**[English](README.md) · [Français](README.fr.md)**
+
 PowerShell script for merging two CSV files, offering two merge modes (stacking or
 key-based join), configurable deduplication, export of unmatched records, and optional
 logging.
