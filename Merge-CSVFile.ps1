@@ -177,7 +177,7 @@
 		99  : Erreur generale / inattendue
 
 .NOTES
-	Version       : 2.5
+	Version       : 2.6
 	Auteur        : Christophe GOEMAERE
 	Date creation : 2026-05-21
 	Modifications :
@@ -198,6 +198,10 @@
 		                    en collision en une seule colonne priorisee.
 		v2.5 - 2026-05-21 - Renommage des strategies de deduplication FIFO / FILO en
 		                    KeepFirst / KeepLast.
+        v2.6 - 2026-05-22 - Correction d'un bug de jointure : la recuperation des correspondances
+		                    via un if-expression deballait une liste a un seul element en objet
+		                    simple, faussant le test .Count et rejetant tous les matchs. Remplace
+		                    par un if-instruction qui preserve le type List.
 #>
 
 [CmdletBinding(DefaultParameterSetName='Union')]
@@ -816,35 +820,51 @@ $Script:LogFilePath   = $null
 				}
 				$Index2[$KeyValue].Add($Row)
 			}
+            
+            <#
+            Write-Host "DEBUG INDEX -> Cles dans Index2 : $($Index2.Count) | CaseSensitive recu : '$CaseSensitive' | KeyFile1='$KeyFile1' KeyFile2='$KeyFile2'"
+			$premiereCleF1 = "$($Rows1[0].$KeyFile1)"
+			Write-Host "DEBUG TEST -> Premiere cle F1 = '[$premiereCleF1]' | Existe dans Index2 ? $($Index2.ContainsKey($premiereCleF1))"
+			$echantillon = $Rows1 | Where-Object { $Index2.ContainsKey("$($_.$KeyFile1)") } | Select-Object -First 1
+			Write-Host "DEBUG TEST -> Au moins un match trouve ? $($null -ne $echantillon)"
+            #>
 
 			# Suivi des cles F2 reellement appariees (meme comparateur de casse que l'index).
 			$UsedKeysF2 = New-Object System.Collections.Generic.HashSet[string] ($Comparer)
 
 			Write-LogEntry -Level 'INFO' -Message "Mode Join ($JoinType, CaseSensitive=$CaseSensitive) : indexation de $($Rows2.Count) ligne(s) du fichier 2 sur la cle '$KeyFile2'."
 
+
 			# Parcours du fichier 1 : pour chaque ligne, on cherche ses correspondances dans l'index F2.
-			foreach($Row1 in $Rows1){
-				$KeyValue = "$($Row1.$KeyFile1)"
-				$Matches  = if($Index2.ContainsKey($KeyValue)){ $Index2[$KeyValue] } else { $null }
+		    foreach($Row1 in $Rows1){
+			    $KeyValue = "$($Row1.$KeyFile1)"
 
-				if($null -ne $Matches -and $Matches.Count -gt 0){
-					# Correspondance trouvee : on fusionne F1 avec CHAQUE ligne F2 correspondante
-					# (si F2 a des doublons sur la cle, on obtient plusieurs lignes en sortie).
-					foreach($Row2 in $Matches){
-						$Merged.Add( (Join-TwoRows -Row1 $Row1 -Row2 $Row2 -Cols1 $Cols1 -Cols2 $Cols2 -CollisionSet $CollisionSet -KeyFile2 $KeyFile2 -ColumnConflict $ColumnConflict -ConflictEmptyValue $ConflictEmptyValue -AddSource $AddSource -Path1 $Path1 -Path2 $Path2) )
-					}
-					[void]$UsedKeysF2.Add($KeyValue)
-				}else{
-					# Aucune correspondance : la ligne F1 est tracee comme non-match.
-					$NoMatchF1.Add($Row1)
+			    # On recupere la liste des correspondances. On NE fait PAS "if(){ $Index2[...] }" car
+			    # l'operateur if, utilise comme expression, deballe une liste a un seul element en
+			    # objet simple : $Matches.Count ne vaudrait alors plus le nombre d'elements.
+			    $Matches = $null
+			    if($Index2.ContainsKey($KeyValue)){
+				    $Matches = $Index2[$KeyValue]
+			    }
 
-					# En KeepUnmatched, on garde quand meme la ligne dans le resultat (colonnes F2 vides).
-					if($JoinType -eq 'KeepUnmatched'){
-						$Merged.Add( (Join-TwoRows -Row1 $Row1 -Row2 $null -Cols1 $Cols1 -Cols2 $Cols2 -CollisionSet $CollisionSet -KeyFile2 $KeyFile2 -ColumnConflict $ColumnConflict -ConflictEmptyValue $ConflictEmptyValue -AddSource $AddSource -Path1 $Path1 -Path2 $Path2) )
-					}
-					# En MatchedOnly, la ligne sans correspondance est simplement exclue du resultat.
-				}
-			}
+			    if($null -ne $Matches -and $Matches.Count -gt 0){
+				    # Correspondance trouvee : on fusionne F1 avec CHAQUE ligne F2 correspondante
+				    # (si F2 a des doublons sur la cle, on obtient plusieurs lignes en sortie).
+				    foreach($Row2 in $Matches){
+					    $Merged.Add( (Join-TwoRows -Row1 $Row1 -Row2 $Row2 -Cols1 $Cols1 -Cols2 $Cols2 -CollisionSet $CollisionSet -KeyFile2 $KeyFile2 -ColumnConflict $ColumnConflict -ConflictEmptyValue $ConflictEmptyValue -AddSource $AddSource -Path1 $Path1 -Path2 $Path2) )
+				    }
+				    [void]$UsedKeysF2.Add($KeyValue)
+			    }else{
+				    # Aucune correspondance : la ligne F1 est tracee comme non-match.
+				    $NoMatchF1.Add($Row1)
+
+				    # En KeepUnmatched, on garde quand meme la ligne dans le resultat (colonnes F2 vides).
+				    if($JoinType -eq 'KeepUnmatched'){
+					    $Merged.Add( (Join-TwoRows -Row1 $Row1 -Row2 $null -Cols1 $Cols1 -Cols2 $Cols2 -CollisionSet $CollisionSet -KeyFile2 $KeyFile2 -ColumnConflict $ColumnConflict -ConflictEmptyValue $ConflictEmptyValue -AddSource $AddSource -Path1 $Path1 -Path2 $Path2) )
+				    }
+				    # En MatchedOnly, la ligne sans correspondance est simplement exclue du resultat.
+			    }
+		    }
 
 			# Lignes F2 dont la cle n'a jamais ete appariee a une ligne F1.
 			foreach($Row2 in $Rows2){
